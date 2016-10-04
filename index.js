@@ -2,16 +2,19 @@ var express = require('express');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 var database = require('./config/database');
+var formattChecker = require('./services/format-integrity-service');
+var queryService = require('./services/test-data-query-service');
 
 var app = express();
 var port = process.env.PORT || 8888;
 
 mongoose.connect(database.url);
 
+//Query should look like "customer-with-good-credit"
 app.get('/find/:query', function (req, res) {
     const query = req.params.query;
 
-    if (!QueryFormatIntegrityService.QueryIsValid()) {
+    if (!formattChecker.isValid(query)) {
         res.writeHead(404, {
             'Content-Type': 'application/json'
         });
@@ -20,7 +23,7 @@ app.get('/find/:query', function (req, res) {
         }));
     };
 
-    var testData = TestDataQueryService.Execute(query);
+    var testData = queryService.execute(query);
 
     if (!testData.Exists()) {
         res.writeHead(404, {
