@@ -10,7 +10,6 @@ var port = process.env.PORT || 8888;
 
 //mongoose.connect(database.url);
 
-//Query should look like "customer-with-good-credit"
 app.get('/find/:query', function (req, res) {
     const query = req.params.query;
 
