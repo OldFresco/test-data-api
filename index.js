@@ -1,50 +1,77 @@
+/* SETUP */
+// Load up express's web app tool
 var express = require('express');
-var mongoose = require('mongoose');
-var bodyParser = require('body-parser');
-var database = require('./config/database');
-var formattChecker = require('./services/format-integrity-service');
-var queryService = require('./services/test-data-query-service');
-
 var app = express();
+
+// Load up express jwt authenticaiton tool
+var jwt = require('express-jwt');
+var jwtCheck = jwt({
+    secret: new Buffer('YOUR_CLIENT_SECRET', 'base64'),
+    audience: 'YOUR_CLIENT_ID'
+});
+
+//Load up morgan logging tool
+var morgan = requiure('morgan');
+
+// Load up required service dependencies
+var requestProcessor = requiure('./sercices/request-processing-service');
+
+
+/* CONFIUGRATION */
+// Establish connection port 
 var port = process.env.PORT || 8888;
 
-app.get('/find/:query', function(req, res) {
-    const query = req.params.query
+// Log requests to STDOUT using Morgan logging tool
+app.use(morgan('combined'));
 
-    if (!formattChecker.isValid(query)) {
+// Protect these endpoints
+app.use('listener', jwtCheck);
+app.use('info', jwtCheck);
+
+
+/* ENDPOINT DEFINITIONS: */
+// Listener endpoint
+app.get('/listener/:request', function(req, res) {
+
+    var outcome = requestProcessor.Process(req);
+
+    if (outcome.isFine) {
+        res.writeHead(200, {
+            'Content-Type': 'application/json'
+        })
+        res.end(JSON.stringify({
+            Response: outcome
+        }))
+    } else {
         res.writeHead(404, {
             'Content-Type': 'application/json'
         })
         res.end(JSON.stringify({
-            Error: "Sorry, couldn't understand the query!"
+            Error: outcome
         }))
-    } else {
-        var testData = queryService.execute(query)
-
-        if (!testData.exists) {
-            res.writeHead(404, {
-                'Content-Type': 'application/json'
-            })
-            res.end(JSON.stringify({
-                error: "Sorry, couldn't find test data matching the query"
-            }))
-        } else {
-            res.writeHead(200, {
-                'Content-Type': 'application/json'
-            })
-            res.end(JSON.stringify({
-                response: testData.data
-            }))
-        }
     }
 });
 
+
+// Information endpoint 
+app.get('/info', function(req, res) {
+    res.writeHead(200, {
+        'Content-Type': 'application/json'
+    })
+    res.end(JSON.stringify({
+        Name: '[Service Name]',
+        Description: '[I do this as a service]',
+        Keywords: ['keywordA', 'KeywordB']
+    }))
+});
+
+// Health check endpoint
 app.get('/health', function(req, res) {
     res.writeHead(200, {
         'Content-Type': 'application/json'
     })
     res.end(JSON.stringify({
-        status: 'OK'
+        Status: 'OK'
     }))
 }).listen(port);
 
