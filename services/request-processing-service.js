@@ -1,7 +1,9 @@
-//Load up service dependencies
+//Load up service dependencies for simple workers
 var securityGuard = require('authorization-service');
-var receptionist = require('request-integrity-service');
-var processingManager = require('request-interpretation-service');
+var receptionist = require('language-integrity-service');
+
+// Load up brain modules or cortexes for complex workers
+var processingManager = require('../cortexes/processing-cortex/brain');
 
 //Define pre processing steps
 var preProcessing = function(req) {
@@ -14,14 +16,14 @@ var preProcessing = function(req) {
     securityGuard.capturesRequestIdentity(req);
 
     //Step 2. Check if request meets access criteria and/or security rules
-    if (!securityGuard.Secures(req)) {
+    if (!securityGuard.secure(req)) {
         outcome.content = securityGuard.failedAuthorizationResponse;
         return outcome;
     }
 
     //Step 3. Check request is in an understandable format 
-    if (!receptionist.understands(req)) {
-        outcome.content = receptionist.failedAuthorizationResponse;
+    if (!receptionist.comprehend(req)) {
+        outcome.content = receptionist.failedComprehensionResponse;
         return outcome;
     }
 
